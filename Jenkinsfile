@@ -2,7 +2,6 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
-            
         }
     }
     environment {
@@ -31,6 +30,9 @@ pipeline {
             steps {
                 script {
                     // Add any testing steps if required
+                    echo 'Running tests...'
+                    // Example test command
+                    // sh 'docker exec kafka-setup-container-name your-test-command'
                 }
             }
         }
