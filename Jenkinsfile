@@ -6,43 +6,49 @@ pipeline {
         }
     }
     environment {
-        DOCKER_COMPOSE_VERSION = '1.29.2'
+        WORKSPACE_DIR = "${env.WORKSPACE}"
     }
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                // Checkout the code from GitHub repository
-                git url: 'https://github.com/your-repo/my-kafka-setup.git', branch: 'main'
+                script {
+                    // Checkout the repository
+                    checkout scm
+                    // Build Docker image using Dockerfile
+                    sh 'docker build -t kafka-setup .'
+                }
             }
         }
-        stage('Install Docker Compose') {
+        stage('Deploy') {
             steps {
-                sh '''
-                apk add --no-cache py-pip
-                pip install docker-compose==${DOCKER_COMPOSE_VERSION}
-                '''
+                script {
+                    // Deploy Kafka using docker-compose.yml
+                    sh 'docker-compose up -d'
+                }
             }
         }
-        stage('Build and Start Services') {
+        stage('Test') {
             steps {
-                // Build Docker images and start services using docker-compose
-                sh 'docker-compose up -d --build'
+                script {
+                    // Add any testing steps if required
+                }
             }
         }
-        stage('Verify Setup') {
+        stage('Cleanup') {
             steps {
-                // Verify Kafka and connectors are running
-                sh '''
-                docker-compose ps
-                curl -s http://localhost:8083/connectors | jq .
-                '''
+                script {
+                    // Cleanup steps if needed
+                    sh 'docker-compose down'
+                }
             }
         }
     }
     post {
         always {
-            // Clean up Docker containers
-            sh 'docker-compose down'
+            script {
+                // Ensure cleanup is always done
+                sh 'docker-compose down'
+            }
         }
     }
 }
