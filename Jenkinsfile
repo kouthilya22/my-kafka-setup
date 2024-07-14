@@ -1,34 +1,47 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.8'
-            args '-u root:root'
-            // Change the working directory to a Unix-style path
-            customWorkspace '/workspace/SampleDockerPipeline'
-        }
+    agent any
+
+    environment {
+        KAFKA_HOME = 'C:\\opt\\confluent'
+        PLUGIN_VERSION = 'latest' // Replace with the desired version
+        CONNECTOR_NAME = 'confluentinc-kafka-connect-s3'
     }
+
     stages {
-        stage('Build') {
+        stage('Clone Repository') {
             steps {
-                script {
-                    // Clone your repository or use any existing code
-                    git 'https://github.com/kouthilya22/my-kafka-setup.git'
-                }
-                echo 'Building the Docker container'
+                git 'https://github.com/kouthilya22/my-kafka-setup.git'
             }
         }
-        stage('Run') {
+
+        stage('Install Kafka and Plugins') {
             steps {
-                sh 'python --version'
-                echo 'Running some tests in Docker container'
-                // Run your tests (ensure you have tests in your repository)
-                sh 'pytest tests'
+                bat """
+                    mkdir ${KAFKA_HOME}
+                    curl -sS https://packages.confluent.io/archive/6.2/confluent-community-${PLUGIN_VERSION}.tar.gz | tar -xz -C ${KAFKA_HOME} --strip-components 1
+                    mkdir ${KAFKA_HOME}\\plugins\\${CONNECTOR_NAME}
+                    curl -sS https://packages.confluent.io/maven/${CONNECTOR_NAME}/${CONNECTOR_NAME}-${PLUGIN_VERSION}.tar.gz | tar -xz -C ${KAFKA_HOME}\\plugins\\${CONNECTOR_NAME} --strip-components 1
+                """
+            }
+        }
+
+        stage('Start Kafka and Test') {
+            steps {
+                bat """
+                    ${KAFKA_HOME}\\bin\\windows\\zookeeper-server-start.bat ${KAFKA_HOME}\\etc\\kafka\\zookeeper.properties
+                    ${KAFKA_HOME}\\bin\\windows\\kafka-server-start.bat ${KAFKA_HOME}\\etc\\kafka\\server.properties
+                    ${KAFKA_HOME}\\bin\\windows\\kafka-topics.bat --create --topic test-topic --bootstrap-server localhost:9092
+                """
             }
         }
     }
+
     post {
         always {
-            echo 'Cleaning up'
+            bat """
+                ${KAFKA_HOME}\\bin\\windows\\kafka-server-stop.bat
+                ${KAFKA_HOME}\\bin\\windows\\zookeeper-server-stop.bat
+            """
         }
     }
 }
