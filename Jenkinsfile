@@ -10,12 +10,14 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
+                echo 'Cloning repository...'
                 git 'https://github.com/kouthilya22/my-kafka-setup.git'
             }
         }
 
         stage('Install Kafka and Plugins') {
             steps {
+                echo 'Installing Kafka and Plugins...'
                 bat """
                     mkdir ${KAFKA_HOME}
                     curl -sS https://packages.confluent.io/archive/6.2/confluent-community-${PLUGIN_VERSION}.tar.gz | tar -xz -C ${KAFKA_HOME} --strip-components 1
@@ -27,6 +29,7 @@ pipeline {
 
         stage('Start Kafka and Test') {
             steps {
+                echo 'Starting Kafka and Testing...'
                 bat """
                     ${KAFKA_HOME}\\bin\\windows\\zookeeper-server-start.bat ${KAFKA_HOME}\\etc\\kafka\\zookeeper.properties
                     ${KAFKA_HOME}\\bin\\windows\\kafka-server-start.bat ${KAFKA_HOME}\\etc\\kafka\\server.properties
@@ -38,6 +41,7 @@ pipeline {
 
     post {
         always {
+            echo 'Cleaning up...'
             bat """
                 ${KAFKA_HOME}\\bin\\windows\\kafka-server-stop.bat
                 ${KAFKA_HOME}\\bin\\windows\\zookeeper-server-stop.bat
