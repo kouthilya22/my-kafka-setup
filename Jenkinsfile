@@ -2,6 +2,7 @@ pipeline {
     agent {
         docker {
             image 'docker:latest'
+            args '-v C:/ProgramData/Jenkins/.jenkins/workspace/kafka:C:/ProgramData/Jenkins/.jenkins/workspace/kafka -v C:/ProgramData/Jenkins/.jenkins/workspace/kafka@tmp:C:/ProgramData/Jenkins/.jenkins/workspace/kafka@tmp'
         }
     }
     environment {
